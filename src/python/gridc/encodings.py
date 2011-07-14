@@ -1,32 +1,51 @@
 import borg
+import numpy
+
+by_name = {}
+
+def named_encoding(class_):
+    by_name[class_.name] = class_()
+
+    return class_
 
 class Grid(object):
     """Instance of the grid-coloring problem."""
 
-    def __init__(self, colors, width, height):
-        self.colors = colors
+    def __init__(self, width, height):
         self.width = width
         self.height = height
+        self.colors = 4
 
-class DirectEncoding(object):
-    def encode(self, grid):
-        # generate variable numbers
-        variables = {}
+class DirectEncodingVariables(object):
+    def __init__(self, grid):
+        self.of_cnf = {}
+        self.of_grid = {}
 
         for x in xrange(grid.width):
             for y in xrange(grid.height):
-                for c in xrange(grid.colors):
-                    variables[(c, x, y)] = len(variables) + 1
+                for c in xrange(4):
+                    v = len(self.of_cnf)
+
+                    self.of_cnf[(c, x, y)] = v + 1
+                    self.of_grid[v + 1] = (c, x, y)
+
+@named_encoding
+class DirectEncoding(object):
+    name = "direct"
+
+    def encode(self, grid):
+        # generate variable numbers
+        variables = DirectEncodingVariables(grid)
 
         # generate cell constraints
         clauses = [[(0, 0, 0, True)]]
 
         for x in xrange(grid.width):
             for y in xrange(grid.height):
-                clauses.append([(c, x, y, True) for c in xrange(grid.colors)])
+                clauses.append([(c, x, y, True) for c in xrange(4)])
 
-                for c in xrange(grid.colors):
-                    for d in xrange(c + 1, grid.colors):
+                for c in xrange(4):
+                    for d in xrange(c + 1, 4):
                         clauses.append([(c, x, y, False), (d, x, y, False)])
 
         # generate rectangle constraints
@@ -34,7 +53,7 @@ class DirectEncoding(object):
             for y0 in xrange(grid.height):
                 for x1 in xrange(x0 + 1, grid.width):
                     for y1 in xrange(y0 + 1, grid.height):
-                        for c in xrange(grid.colors):
+                        for c in xrange(4):
                             clauses.append([
                                 (c, x0, y0, False),
                                 (c, x0, y1, False),
@@ -45,22 +64,35 @@ class DirectEncoding(object):
         # build CNF
         def literal((c, x, y, p)):
             if p:
-                return variables[(c, x, y)]
+                return variables.of_cnf[(c, x, y)]
             else:
-                return -variables[(c, x, y)]
+                return -variables.of_cnf[(c, x, y)]
 
         return \
             borg.domains.sat.instance.SAT_Instance.from_clauses(
                 [map(literal, clause) for clause in clauses],
-                len(variables),
+                len(variables.of_cnf),
                 )
 
     def decode(self, grid, answer):
-        """Return a coloring from a grid and a solution to the CNF."""
+        """Return a coloring given a grid and a solution to the CNF."""
 
-        pass
+        variables = DirectEncodingVariables(grid)
+        coloring = numpy.ones((grid.width, grid.height), int) * -1
+
+        for literal in answer:
+            if literal > 0:
+                (c, x, y) = variables.of_grid[literal]
+
+                assert coloring[x, y] == -1
+
+                coloring[x, y] = c
+
+        return coloring
 
 class LogEncoding(object):
+    name = "log"
+
     def encode(self, grid):
         pass
 

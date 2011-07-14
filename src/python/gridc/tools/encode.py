@@ -1,6 +1,6 @@
 import os.path
 import plac
-import grid_coloring
+import gridc
 
 @plac.annotations(
     root_path = ("path to output directory"),
