@@ -3,6 +3,7 @@ import zlib
 import base64
 import cPickle as pickle
 import plac
+import numpy
 import gridc
 
 @plac.annotations(
@@ -28,6 +29,11 @@ def main(runs_path, encoding, width, height):
     grid = gridc.encodings.Grid(width, height)
     encoding = gridc.encodings.by_name[encoding]
     coloring = encoding.decode(grid, answer)
+
+    if not numpy.all(coloring < 4) or not numpy.all(coloring >= 0):
+        raise ValueError("invalid color in coloring")
+    if not grid.is_coloring(coloring):
+        raise ValueError("constraint violation in coloring")
 
     print coloring
 
