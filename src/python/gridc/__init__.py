@@ -7,7 +7,7 @@ logger = cargo.get_logger(__name__)
 _encodings_by_name = {}
 
 def named_encoding(class_):
-    _encodings_by_name[class_.name] = class_()
+    _encodings_by_name[class_.name] = class_
 
     logger.info("registered encoding %s", class_.name)
 
@@ -29,12 +29,22 @@ class Grid(object):
 
         for x0 in xrange(self.width):
             for y0 in xrange(self.height):
+                assert 0 <= coloring[x0, y0] <= 3
+
                 for x1 in xrange(x0 + 1, self.width):
                     for y1 in xrange(y0 + 1, self.height):
                         if coloring[x0, y0] == coloring[x0, y1] == coloring[x1, y0] == coloring[x1, y1]:
                             return False
 
         return True
+
+class Encoding(object):
+    def __init__(self, grid):
+        self.grid = grid
+
+class EncodingVariables(object):
+    def __init__(self, grid):
+        self.grid = grid
 
 from . import encodings
 

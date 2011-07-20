@@ -21,7 +21,7 @@ def main(root_path, encoding_name, min_width, max_width, min_height, max_height)
             # encode the instance
             grid = gridc.Grid(width, height)
             encoding = gridc.encoding(encoding_name)
-            instance = encoding.encode(grid)
+            instance = encoding(grid).encode()
 
             # write it to disk
             out_name = "{0}x{1}.{2}.cnf".format(width, height, encoding_name)

@@ -6,6 +6,21 @@ import plac
 import numpy
 import gridc
 
+def visualize(encoding_name, width, height, answer):
+    """Verify and print the coloring."""
+
+    # decode the certificate
+    grid = gridc.Grid(width, height)
+    encoder = gridc.encoding(encoding_name)(grid)
+    coloring = encoder.decode(answer)
+
+    if not numpy.all(coloring < 4) or not numpy.all(coloring >= 0):
+        raise ValueError("invalid color in coloring")
+    if not grid.is_coloring(coloring):
+        raise ValueError("constraint violation in coloring")
+
+    print coloring
+
 @plac.annotations(
     runs_path = ("path to runs file"),
     encoding = ("name of the encoding"),
@@ -21,21 +36,18 @@ def main(runs_path, encoding, width, height):
 
         reader.next()
 
-        (_, _, _, _, answer_text) = reader.next()
+        for (i, (_, _, _, _, answer_text)) in enumerate(reader):
+            if i > 0:
+                print
 
-    answer = pickle.loads(zlib.decompress(base64.b64decode(answer_text)))
+            print "Coloring obtained by run {0}:".format(i)
 
-    # decode the certificate
-    grid = gridc.encodings.Grid(width, height)
-    encoding = gridc.encodings.by_name[encoding]
-    coloring = encoding.decode(grid, answer)
+            if answer_text == "":
+                print "(!) None"
+            else:
+                answer = pickle.loads(zlib.decompress(base64.b64decode(answer_text)))
 
-    if not numpy.all(coloring < 4) or not numpy.all(coloring >= 0):
-        raise ValueError("invalid color in coloring")
-    if not grid.is_coloring(coloring):
-        raise ValueError("constraint violation in coloring")
-
-    print coloring
+                visualize(encoding, width, height, answer)
 
 if __name__ == "__main__":
     plac.call(main)
