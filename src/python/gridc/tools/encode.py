@@ -1,6 +1,7 @@
 import os.path
 import plac
 import gridc
+import cargo
 
 @plac.annotations(
     root_path = ("path to output directory"),
@@ -13,11 +14,13 @@ import gridc
 def main(root_path, encoding_name, min_width, max_width, min_height, max_height):
     """Encode a grid-coloring problem in CNF."""
 
+    cargo.enable_default_logging()
+
     for width in xrange(min_width, max_width + 1):
         for height in xrange(min_height, max_height + 1):
             # encode the instance
-            grid = gridc.encodings.Grid(width, height)
-            encoding = gridc.encodings.by_name[encoding_name]
+            grid = gridc.Grid(width, height)
+            encoding = gridc.encoding(encoding_name)
             instance = encoding.encode(grid)
 
             # write it to disk
